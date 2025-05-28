@@ -1,0 +1,194 @@
+.settings-popup-container {
+  background-color: #7f8390;
+  width: 50%;
+  height: 50%;
+  position: absolute;
+  z-index: 1;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 450px;
+  border-radius: 10px;
+  color: black;
+  animation: fade 0.2s linear;
+}
+
+.settings-title {
+  font-size: 30px;
+  flex: 0 1 auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  position: relative;
+  justify-content: flex-start;
+  margin-top: 15px;
+}
+
+.setting-label {
+  font-size: 22px;
+}
+
+.orange-status,
+.red-status,
+.green-status {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  margin-right: 8px;
+  display: inline-block;
+}
+
+.orange-status {
+  background-color: #cb7900;
+}
+
+.red-status {
+  background-color: #cb0000;
+}
+
+.green-status {
+  background-color: #00cb00;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  margin-left: 10px;
+  margin-right: 20px;
+}
+
+.status-input {
+  width: 50px;
+  font-size: 20px;
+  padding: 5px;
+  margin-right: 8px;
+}
+
+.status-options-container {
+  display: flex;
+  margin-top: 20px;
+}
+
+.settings-container {
+  padding: 25px;
+}
+
+.status-mins-label {
+  font-size: 18px;
+}
+
+.settings-footer {
+  position: absolute;
+  margin-left: -50px;
+  left: 50%;
+  width: 100px;
+  bottom: 20px;
+}
+
+/* ===== Estilo exclusivo do botão Aplicar ===== */
+.settings-submit-button {
+  background: linear-gradient(135deg, #5a5a5a 0%, #888888 100%);
+  color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease;
+}
+
+.settings-submit-button:hover {
+  background: linear-gradient(135deg, #3a3a3a 0%, #6b6b6b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.settings-submit-button:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.close-wrapper {
+  flex: 0 1 auto;
+  margin-left: auto;
+  width: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 15px;
+  position: relative;
+}
+
+.close-arrow {
+  width: 35px;
+  height: 35px;
+  border-radius: 20px;
+  background: hsla(0, 0%, 0%, 0.355);
+  cursor: pointer;
+  transition: all 0.2s ease-in;
+}
+
+.close-arrow:hover {
+  background: hsla(0, 0%, 0%, 0.573);
+}
+
+.close-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 4px;
+  border-radius: 2px;
+  background: hsl(0, 0%, 100%);
+  transform-origin: center;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close-line:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Remove setas dos inputs number - Chrome, Safari, Edge */
+.status-input.no-spin::-webkit-outer-spin-button,
+.status-input.no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove setas dos inputs number - Firefox */
+.status-input.no-spin {
+  -moz-appearance: textfield;
+}
+
+.settings-description-block {
+  margin-top: 10px;
+  margin-bottom: 25px;
+}
+
+.settings-description {
+  margin: 5px 0 10px;
+  font-size: 16px;
+  color: white;
+}
+
+.settings-hint-list {
+  list-style: none;
+  padding-left: 0;
+  color: white;
+  font-size: 15px;
+}
+
+.settings-hint-list li {
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+}

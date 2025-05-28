@@ -1,0 +1,25 @@
+version: 0.2
+env:
+  variables:
+    PROD_MODE: $PROD_MODE
+phases:
+  install:
+    runtime-versions:
+      nodejs: 16
+  pre_build:
+    commands:
+      - echo Installing source NPM dependencies...
+      - npm install
+  build:
+    commands:
+      - echo Build started on 'date'
+      - export REACT_APP_MODE=${PROD_MODE}
+      - npm run build
+  post_build:
+    commands:
+      - aws s3 cp --recursive --acl public-read ./build s3://$S3_BUCKET_NAME/
+      - aws s3 cp --acl public-read --cache-control="max-age=0, no-cache, no-store, must-revalidate" ./build/index.html s3://$S3_BUCKET_NAME/
+artifacts:
+  files:
+    - "build/*"
+    - "build/**/*"

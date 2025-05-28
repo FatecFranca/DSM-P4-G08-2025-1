@@ -1,0 +1,82 @@
+.sensor-container {
+  padding: 10px;
+  background-color: #4a515f;
+  border-radius: 10px;
+  flex-grow: 1;
+  min-width: 230px;
+  max-width: 400px;
+  height: fit-content;
+  cursor: pointer;
+}
+
+.sensor-container h2 {
+  text-align: left;
+  top: 0;
+  position: relative;
+  margin: 0;
+  font-size: 30px;
+}
+
+.sensor-container p {
+  font-size: 26px;
+  text-align: left;
+}
+
+.status-indicator {
+  height: auto;
+  width: 8px;
+  border-radius: 8px;
+  margin-right: 8px;
+}
+
+.sensor-header {
+  display: flex;
+}
+
+.sensor-updated {
+  font-size: 14px !important;
+  margin: 3px 0 0 0;
+}
+
+.sensor-output-name {
+  font-size: 12px;
+  text-align: left;
+  padding: 5px 0 0 5px;
+}
+
+.sensor-output {
+  padding: 30px 30px 45px 30px;
+  font-weight: 600;
+  font-size: 36px;
+}
+
+.sensor-output-container {
+  background-color: #17191e;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+.my-node-enter {
+  opacity: 0;
+}
+.my-node-enter-active {
+  opacity: 1;
+  transition: opacity 200ms;
+}
+.my-node-exit {
+  opacity: 1;
+}
+.my-node-exit-active {
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.stats-container-extend {
+  display: flex;
+  justify-content: space-around;
+  padding-bottom: 20px;
+}
+
+.sensor-output-extend {
+  padding: 15px 30px 15px 25px;
+}

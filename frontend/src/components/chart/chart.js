@@ -47,7 +47,6 @@ const getStats = (values) => {
 const formatStat = (v, unit = '') =>
   isNaN(v) ? '--' : `${v.toFixed(2)}${unit}`;
 
-/** Converte "HH:mm" → minutos desde 00:00. */
 const parseHHmmToMinutes = (hhmm) => {
   if (typeof hhmm !== 'string') return NaN;
   const [h, m] = hhmm.split(':').map(Number);
@@ -55,7 +54,7 @@ const parseHHmmToMinutes = (hhmm) => {
   return h * 60 + m;
 };
 
-/** Converte minutos desde 00:00 → "HH:mm" (faz mod 1440 para ficar dentro do dia). */
+
 const minutesToHHmm = (minutes) => {
   const total = ((minutes % 1440) + 1440) % 1440;
   const hh = Math.floor(total / 60);
@@ -71,21 +70,15 @@ const Chart = ({ sensorData }) => {
     return <p style={{ color: '#fff' }}>Nenhum dado disponível para exibir os gráficos.</p>;
   }
 
-  // Intervalo de ticks no eixo X
   const xInterval = () => {
     const len = convertedData.data.length;
     const i1 = len / 10;
     return i1 < 30 ? i1 : 30;
   };
 
-  // Estatísticas “clássicas”
   const tempStats = getStats(convertedData.data.map(d => d.temperature));
   const humStats  = getStats(convertedData.data.map(d => d.humidity));
 
-  // ==============================================
-  // 1) TEMPERATURA: pares [minutos, temperatura] →
-  //                regressão + R² + previsão 1h
-  // ==============================================
   const tempPairs = convertedData.data
     .map(d => {
       const minutos = parseHHmmToMinutes(d.timestamp_TTL);
@@ -97,20 +90,17 @@ const Chart = ({ sensorData }) => {
     .filter(p => p !== null);
 
   let tempRegInfo = {
-    regressao: NaN,       // será o R²
+    regressao: NaN,
     forecast: NaN,
     forecastLabel: '--'
   };
 
   if (tempPairs.length > 1) {
-    // 1.1) Calcula slope/intercept e cria função lineFn
     const { m: slope, b: intercept } = linearRegression(tempPairs);
     const lineFn = linearRegressionLine({ m: slope, b: intercept });
 
-    // 1.2) Calcula R² diretamente
     const r2 = rSquared(tempPairs, lineFn);
 
-    // 1.3) Previsão para +60 minutos
     const lastMin = tempPairs[tempPairs.length - 1][0];
     const nextMin = lastMin + 60;
     const forecastValue = lineFn(nextMin);
@@ -119,10 +109,6 @@ const Chart = ({ sensorData }) => {
     tempRegInfo = { regressao: r2, forecast: forecastValue, forecastLabel };
   }
 
-  // ==============================================
-  // 2) UMIDADE: pares [minutos, umidade] →
-  //             regressão + R² + previsão 1h
-  // ==============================================
   const humPairs = convertedData.data
     .map(d => {
       const minutos = parseHHmmToMinutes(d.timestamp_TTL);
@@ -134,7 +120,7 @@ const Chart = ({ sensorData }) => {
     .filter(p => p !== null);
 
   let humRegInfo = {
-    regressao: NaN,       // será o R²
+    regressao: NaN, 
     forecast: NaN,
     forecastLabel: '--'
   };
@@ -157,7 +143,6 @@ const Chart = ({ sensorData }) => {
 
   return (
     <div>
-      {/* ========== GRÁFICO DE TEMPERATURA ========== */}
       <h3 style={{ color: '#d1d1d1', marginBottom: '10px' }}>Temperatura</h3>
       <LineChart
         width={400}
@@ -206,8 +191,6 @@ const Chart = ({ sensorData }) => {
           connectNulls={false}
         />
       </LineChart>
-
-      {/* ========== GRÁFICO DE UMIDADE ========== */}
       <h3 style={{ color: '#d1d1d1', marginTop: '40px', marginBottom: '10px' }}>Umidade</h3>
       <LineChart
         width={400}

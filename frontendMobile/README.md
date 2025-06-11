@@ -46,9 +46,9 @@ Este repositório contém o código do **frontend mobile** do projeto. O aplicat
     git clone [URL]
     ```
 
-2.  **Acesse o diretório do projeto:**
+2.  **Acesse o diretório do projeto, certifique-se de estar na pasta frontendMobile:**
     ```bash
-    cd appMobile
+    cd frontendMobile
     ```
 
 3.  **Instale as dependências:**

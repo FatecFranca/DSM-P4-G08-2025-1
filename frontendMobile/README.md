@@ -43,7 +43,7 @@ Este repositório contém o código do **frontend mobile** do projeto. O aplicat
 
 1.  **Clone o repositório do frontend:**
     ```bash
-    git clone [URL]
+    git clone https://github.com/FatecFranca/DSM-P4-G08-2025-8.git
     ```
 
 2.  **Acesse o diretório do projeto, certifique-se de estar na pasta frontendMobile:**

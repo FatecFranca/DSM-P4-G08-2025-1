@@ -9,6 +9,7 @@ import {
   Legend
 } from "recharts";
 import { useSelector } from 'react-redux';
+import { BarChart, Bar, ResponsiveContainer, LabelList } from "recharts";
 
 import convertToTime from '../../utils/convertToTime';
 import {
@@ -21,6 +22,7 @@ import {
   linearRegressionLine,
   rSquared
 } from 'simple-statistics';
+import { shapiroWilk } from '../../utils/testeShapiroWilk';
 
 import './chart.css';
 
@@ -79,13 +81,38 @@ const Chart = ({ sensorData }) => {
   const tempStats = getStats(convertedData.data.map(d => d.temperature));
   const humStats  = getStats(convertedData.data.map(d => d.humidity));
 
+  // Função para converter timestamp_TTL para minutos desde o início do dia
+  const getMinutesFromData = (d) => {
+    if (typeof d.timestamp_TTL === 'number') {
+      // timestamp em segundos desde epoch
+      const date = new Date(d.timestamp_TTL * 1000);
+      return date.getHours() * 60 + date.getMinutes();
+    } else if (typeof d.timestamp_TTL === 'string') {
+      // formato HH:mm
+      return parseHHmmToMinutes(d.timestamp_TTL);
+    }
+    return NaN;
+  };
+
   const tempPairs = convertedData.data
     .map(d => {
-      const minutos = parseHHmmToMinutes(d.timestamp_TTL);
+      const minutos = getMinutesFromData(d);
       const t = Number(d.temperature);
-      return (!isNaN(minutos) && !isNaN(t))
-        ? [minutos, t]
-        : null;
+      if (!isNaN(minutos) && !isNaN(t)) {
+        return [minutos, t];
+      }
+      return null;
+    })
+    .filter(p => p !== null);
+
+  const humPairs = convertedData.data
+    .map(d => {
+      const minutos = getMinutesFromData(d);
+      const h = Number(d.humidity);
+      if (!isNaN(minutos) && !isNaN(h)) {
+        return [minutos, h];
+      }
+      return null;
     })
     .filter(p => p !== null);
 
@@ -109,16 +136,6 @@ const Chart = ({ sensorData }) => {
     tempRegInfo = { regressao: r2, forecast: forecastValue, forecastLabel };
   }
 
-  const humPairs = convertedData.data
-    .map(d => {
-      const minutos = parseHHmmToMinutes(d.timestamp_TTL);
-      const h = Number(d.humidity);
-      return (!isNaN(minutos) && !isNaN(h))
-        ? [minutos, h]
-        : null;
-    })
-    .filter(p => p !== null);
-
   let humRegInfo = {
     regressao: NaN, 
     forecast: NaN,
@@ -139,7 +156,77 @@ const Chart = ({ sensorData }) => {
     humRegInfo = { regressao: r2H, forecast: forecastValueH, forecastLabel: forecastLabelH };
   }
 
+  // Cálculo da probabilidade empírica da temperatura ser maior que 25
+  const tempValues = convertedData.data.map(d => Number(d.temperature)).filter(v => !isNaN(v));
+  const countAbove25 = tempValues.filter(v => v > 25).length;
+  const probAbove25 = tempValues.length > 0 ? (countAbove25 / tempValues.length) : 0;
+
+  // Teste de normalidade Shapiro-Wilk
+  let probNormal = null;
+  let isNormal = false;
+  let shapiroResult = null;
+  if (tempValues.length >= 3) {
+    shapiroResult = shapiroWilk(tempValues);
+    isNormal = shapiroResult && shapiroResult.pValue > 0.05;
+    if (isNormal) {
+      // Se normal, calcula a probabilidade pela normal
+      const meanVal = tempStats.media;
+      const stdVal = tempStats.desvio;
+      if (!isNaN(meanVal) && !isNaN(stdVal) && stdVal > 0) {
+        // P(X > 25) = 1 - P(X <= 25)
+        const z = (25 - meanVal) / stdVal;
+
+        probNormal = 1 - (typeof window !== 'undefined' && window.normalCdf ? window.normalCdf(z) : require('../../utils/testeShapiroWilk').normalCdf(z));
+      }
+    }
+  }
+
   const rightValue = tempState.openGraphCount > 1 ? 10 : 20;
+
+  // Previsão futura usando regressão linear (10, 20, 30, 40, 50 minutos)
+  let tempForecastBars = [];
+  let humForecastBars = [];
+  if (tempPairs.length > 1) {
+    const { m: slope, b: intercept } = linearRegression(tempPairs);
+    const lineFn = linearRegressionLine({ m: slope, b: intercept });
+    const lastMin = tempPairs[tempPairs.length - 1][0];
+    tempForecastBars = [10, 20, 30, 40, 50].map(min => {
+      const futureMin = lastMin + min;
+      const temp = lineFn(futureMin);
+      return {
+        horario: minutesToHHmm(futureMin),
+        temperatura: isFinite(temp) ? parseFloat(temp.toFixed(2)) : null
+      };
+    }).filter(bar => bar.temperatura !== null && !isNaN(bar.temperatura));
+  }
+  if (humPairs.length > 1) {
+    const { m: slopeH, b: interceptH } = linearRegression(humPairs);
+    const lineFnH = linearRegressionLine({ m: slopeH, b: interceptH });
+    const lastMinH = humPairs[humPairs.length - 1][0];
+    humForecastBars = [10, 20, 30, 40, 50].map(min => {
+      const futureMin = lastMinH + min;
+      const hum = lineFnH(futureMin);
+      return {
+        horario: minutesToHHmm(futureMin),
+        umidade: isFinite(hum) ? parseFloat(hum.toFixed(2)) : null
+      };
+    }).filter(bar => bar.umidade !== null && !isNaN(bar.umidade));
+  }
+
+  // Ajustar domínio do Y axis para cobrir range dos dados previstos
+  let tempMin = tempForecastBars.length ? Math.min(...tempForecastBars.map(b => Number(b.temperatura))) : 0;
+  let tempMax = tempForecastBars.length ? Math.max(...tempForecastBars.map(b => Number(b.temperatura))) : 1;
+  let humMin = humForecastBars.length ? Math.min(...humForecastBars.map(b => Number(b.umidade))) : 0;
+  let humMax = humForecastBars.length ? Math.max(...humForecastBars.map(b => Number(b.umidade))) : 1;
+  // Se todos os valores forem iguais, ajuste o domínio para mostrar as barras corretamente
+  if (tempMin === tempMax) {
+    tempMin = tempMin - 1;
+    tempMax = tempMax + 1;
+  }
+  if (humMin === humMax) {
+    humMin = humMin - 1;
+    humMax = humMax + 1;
+  }
 
   return (
     <div>
@@ -239,6 +326,51 @@ const Chart = ({ sensorData }) => {
           connectNulls={false}
         />
       </LineChart>
+      {/* Card de Probabilidades */}
+      <div style={{
+        background: 'rgba(40, 40, 40, 0.95)',
+        borderRadius: '12px',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+        padding: '22px 18px 10px 18px',
+        margin: '30px auto 0 auto',
+        maxWidth: 350,
+        color: '#fff',
+        textAlign: 'center',
+        fontFamily: 'inherit',
+        border: '1px solid #444'
+      }}>
+        <div style={{ fontSize: '17px', fontWeight: 600, marginBottom: 8, letterSpacing: 0.5 }}>Probabilidades</div>
+        <div style={{ fontSize: '15px', marginBottom: 4 }}>
+          Empírica (T &gt; 25°C): <b style={{ color: '#ffd580' }}>{(probAbove25 * 100).toFixed(1)}%</b>
+        </div>
+        <div style={{ fontSize: '15px', marginBottom: 4 }}>
+          Distribuição normal (T &gt; 25°C): <b style={{ color: isNormal ? '#b0e57c' : '#ff8888' }}>{isNormal && probNormal !== null ? (probNormal * 100).toFixed(1) + '%' : 'anormal'}</b>
+        </div>
+        <div style={{ fontSize: '13px', color: '#aaa', marginTop: 2 }}>
+          p-value do teste de normalidade: <b>{shapiroResult && typeof shapiroResult.pValue === 'number' ? shapiroResult.pValue.toFixed(8) : '--'}</b>
+        </div>
+      </div>
+      {/* Gráficos de barras de previsão - formato igual aos gráficos de linha */}
+      <h3 style={{ color: '#d1d1d1', marginTop: '40px', marginBottom: '10px' }}>Previsão Temperatura (°C)</h3>
+      <ResponsiveContainer width={380} height={230}>
+        <LineChart data={tempForecastBars} margin={{ top: 20, right: 20, left: 5, bottom: 25 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="horario" tick={{ fill: '#d1d1d1', fontSize: 15 }} />
+          <YAxis tick={{ fill: '#d1d1d1', fontSize: 15 }} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={v => v.toFixed(2)} />
+          <Tooltip />
+          <Line type="monotone" dataKey="temperatura" name="Temperatura Prevista" stroke="#ffb366" strokeWidth={2} dot={{ r: 4 }} />
+        </LineChart>
+      </ResponsiveContainer>
+      <h3 style={{ color: '#d1d1d1', marginTop: '40px', marginBottom: '10px' }}>Previsão Umidade (%)</h3>
+      <ResponsiveContainer width={380} height={230}>
+        <LineChart data={humForecastBars} margin={{ top: 20, right: 20, left: 5, bottom: 25 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="horario" tick={{ fill: '#d1d1d1', fontSize: 15 }} />
+          <YAxis tick={{ fill: '#d1d1d1', fontSize: 15 }} domain={['dataMin - 1', 'dataMax + 1']} tickFormatter={v => v.toFixed(2)} />
+          <Tooltip />
+          <Line type="monotone" dataKey="umidade" name="Umidade Prevista" stroke="#7ecfff" strokeWidth={2} dot={{ r: 4 }} />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 };

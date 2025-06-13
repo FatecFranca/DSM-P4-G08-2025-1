@@ -29,7 +29,7 @@ function erf(x) {
  * @param {number} z - O Z-score.
  * @returns {number} A probabilidade acumulada de 0 a 1.
  */
-function normalCdf(z) {
+export function normalCdf(z) {
     return 0.5 * (1 + erf(z / Math.SQRT2));
 }
 

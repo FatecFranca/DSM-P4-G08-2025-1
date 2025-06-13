@@ -22,7 +22,7 @@ import {
   linearRegressionLine,
   rSquared
 } from 'simple-statistics';
-import { shapiroWilk } from '../../utils/testeShapiroWilk';
+import { shapiroWilk, normalCdf } from '../../utils/testeShapiroWilk';
 
 import './chart.css';
 
@@ -176,7 +176,7 @@ const Chart = ({ sensorData }) => {
         // P(X > 25) = 1 - P(X <= 25)
         const z = (25 - meanVal) / stdVal;
 
-        probNormal = 1 - (typeof window !== 'undefined' && window.normalCdf ? window.normalCdf(z) : require('../../utils/testeShapiroWilk').normalCdf(z));
+        probNormal = 1 - normalCdf(z);
       }
     }
   }
